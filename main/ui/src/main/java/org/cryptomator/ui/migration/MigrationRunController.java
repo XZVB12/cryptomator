@@ -99,6 +99,7 @@ public class MigrationRunController implements FxController {
 		LOG.info("Migrating vault {}", vault.getPath());
 		CharSequence password = passwordField.getCharacters();
 		vault.setState(VaultState.PROCESSING);
+		passwordField.setDisable(true);
 		ScheduledFuture<?> progressSyncTask = scheduler.scheduleAtFixedRate(() -> {
 			Platform.runLater(() -> {
 				migrationProgress.set(volatileMigrationProgress);
@@ -120,6 +121,7 @@ public class MigrationRunController implements FxController {
 			}
 		}).onError(InvalidPassphraseException.class, e -> {
 			Animations.createShakeWindowAnimation(window).play();
+			passwordField.setDisable(false);
 			passwordField.selectAll();
 			passwordField.requestFocus();
 			vault.setState(VaultState.NEEDS_MIGRATION);
@@ -133,25 +135,18 @@ public class MigrationRunController implements FxController {
 			vault.setState(VaultState.NEEDS_MIGRATION);
 			errorComponent.cause(e).window(window).returnToScene(startScene.get()).build().showErrorScene();
 		}).andFinally(() -> {
+			passwordField.setDisable(false);
 			progressSyncTask.cancel(true);
 		}).runOnce(executor);
 	}
 
 	// Called by a background task. We can not directly modify observable properties from here
 	private void migrationProgressChanged(MigrationProgressListener.ProgressState state, double progress) {
-		switch (state) {
-			case INITIALIZING:
-				volatileMigrationProgress = -1.0;
-				break;
-			case MIGRATING:
-				volatileMigrationProgress = progress;
-				break;
-			case FINALIZING:
-				volatileMigrationProgress = 1.0;
-				break;
-			default:
-				throw new IllegalStateException("Unexpted state " + state);
-		}
+		volatileMigrationProgress = switch (state) {
+			case INITIALIZING -> -1.0;
+			case MIGRATING -> progress;
+			case FINALIZING -> 1.0;
+		};
 	}
 
 	private void loadStoredPassword() {
@@ -191,12 +186,10 @@ public class MigrationRunController implements FxController {
 	}
 
 	public ContentDisplay getMigrateButtonContentDisplay() {
-		switch (vault.getState()) {
-			case PROCESSING:
-				return ContentDisplay.LEFT;
-			default:
-				return ContentDisplay.TEXT_ONLY;
-		}
+		return switch (vault.getState()) {
+			case PROCESSING -> ContentDisplay.LEFT;
+			default -> ContentDisplay.TEXT_ONLY;
+		};
 	}
 
 	public ReadOnlyDoubleProperty migrationProgressProperty() {

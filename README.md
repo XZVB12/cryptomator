@@ -1,6 +1,6 @@
 [![cryptomator](cryptomator.png)](https://cryptomator.org/)
 
-[![Build Status](https://travis-ci.org/cryptomator/cryptomator.svg?branch=master)](https://travis-ci.org/cryptomator/cryptomator)
+[![Build](https://github.com/cryptomator/cryptomator/workflows/Build/badge.svg)](https://github.com/cryptomator/cryptomator/actions?query=workflow%3ABuild)
 [![Known Vulnerabilities](https://snyk.io/test/github/cryptomator/cryptomator/badge.svg?targetFile=main%2Fpom.xml)](https://snyk.io/test/github/cryptomator/cryptomator?targetFile=main%2Fpom.xml)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/2a0adf3cec6a4143b91035d3924178f1)](https://www.codacy.com/app/cryptomator/cryptomator?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=cryptomator/cryptomator&amp;utm_campaign=Badge_Grade)
 [![Twitter](https://img.shields.io/badge/twitter-@Cryptomator-blue.svg?style=flat)](http://twitter.com/Cryptomator)
@@ -14,6 +14,10 @@ Cryptomator is provided free of charge as an open-source project despite the hig
 
 - [One-time or recurring donation via Cryptomator's website.](https://cryptomator.org/#donate)
 - [Become a sponsor via Cryptomator's sponsors website.](https://cryptomator.org/sponsors/)
+
+### Gold Sponsors
+
+[<img src="https://cryptomator.org/img/sponsors/geewhiz.svg" alt="gee-whiz" height="96">](https://www.gee-whiz.de/)
 
 ### Silver Sponsors
 
@@ -55,13 +59,13 @@ Download native binaries of Cryptomator on [cryptomator.org](https://cryptomator
 
 ### Security Architecture
 
-For more information on the security details visit [cryptomator.org](https://cryptomator.org/architecture/).
+For more information on the security details visit [cryptomator.org](https://docs.cryptomator.org/en/latest/security/architecture/).
 
 ## Building
 
 ### Dependencies
 
-* JDK 11 (we recommend to use the latest version)
+* JDK 14 (e.g. adoptopenjdk)
 * Maven 3
 * Optional: OS-dependent build tools for native packaging (see [Windows](https://github.com/cryptomator/cryptomator-win), [OS X](https://github.com/cryptomator/cryptomator-osx), [Linux](https://github.com/cryptomator/builder-containers))
 

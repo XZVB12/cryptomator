@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.io.IOException;
 
 @MainWindowScoped
 public class VaultListController implements FxController {
@@ -65,17 +66,18 @@ public class VaultListController implements FxController {
 		}
 		VaultState reportedState = newValue.getState();
 		switch (reportedState) {
-			case LOCKED:
-			case NEEDS_MIGRATION:
-			case MISSING:
-				VaultState determinedState = VaultListManager.determineVaultState(newValue.getPath());
-				newValue.setState(determinedState);
+			case LOCKED, NEEDS_MIGRATION, MISSING:
+				try {
+					VaultState determinedState = VaultListManager.determineVaultState(newValue.getPath());
+					newValue.setState(determinedState);
+				} catch (IOException e) {
+					LOG.warn("Failed to determine vault state for " + newValue.getPath(), e);
+					newValue.setState(VaultState.ERROR);
+					newValue.setLastKnownException(e);
+				}
 				break;
-			case ERROR:
-			case UNLOCKED:
-			case PROCESSING:
-			default:
-				// no-op
+			case ERROR, UNLOCKED, PROCESSING:
+				break; // no-op
 		}
 	}
 
