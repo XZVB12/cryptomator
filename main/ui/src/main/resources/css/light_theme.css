@@ -630,6 +630,10 @@
 	-fx-background-color: TEXT_FILL;
 }
 
+.check-box:selected:disabled > .box > .mark {
+	-fx-background-color: TEXT_FILL_MUTED;
+}
+
 /*******************************************************************************
  *                                                                             *
  * RadioButton                                                                 *
@@ -853,7 +857,7 @@
 .progress-bar > .bar {
 	-fx-background-color: CONTROL_PRIMARY_BG_NORMAL;
 	-fx-background-radius: 4px;
-	-fx-padding: 0.5em;
+	-fx-padding: 1em 0.5em;
 }
 
 .progress-bar:indeterminate > .bar {
