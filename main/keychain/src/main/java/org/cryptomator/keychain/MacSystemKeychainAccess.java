@@ -8,11 +8,13 @@ package org.cryptomator.keychain;
 import java.util.Optional;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.cryptomator.jni.MacFunctions;
 import org.cryptomator.jni.MacKeychainAccess;
 
+@Singleton
 class MacSystemKeychainAccess implements KeychainAccessStrategy {
 
 	private final Optional<MacFunctions> macFunctions;
@@ -44,6 +46,11 @@ class MacSystemKeychainAccess implements KeychainAccessStrategy {
 	@Override
 	public void deletePassphrase(String key) {
 		keychain().deletePassword(key);
+	}
+
+	@Override
+	public void changePassphrase(String key, CharSequence passphrase) throws KeychainAccessException {
+		storePassphrase(key, passphrase);
 	}
 
 }

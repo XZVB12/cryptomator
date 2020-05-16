@@ -15,16 +15,27 @@
 			<artifactId>commons</artifactId>
 		</dependency>
 
+		<!-- JavaFx -->
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-base</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-graphics</artifactId>
+		</dependency>
+		
+		<!-- Apache -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 		</dependency>
+
+		<!-- Google -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 		</dependency>
-
-		<!-- Google -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
@@ -40,7 +51,6 @@
 		<dependency>
 			<groupId>de.swiesend</groupId>
 			<artifactId>secret-service</artifactId>
-			<version>1.0.0-RC.3</version>
 		</dependency>
 
 		<!-- Logging -->

@@ -4,16 +4,13 @@ import javafx.concurrent.Task;
 import org.cryptomator.common.vaults.Vault;
 import org.cryptomator.common.vaults.VaultState;
 import org.cryptomator.common.vaults.Volume;
-import org.cryptomator.cryptolib.api.InvalidPassphraseException;
-import org.cryptomator.keychain.KeychainAccess;
+import org.cryptomator.keychain.KeychainManager;
 import org.cryptomator.ui.fxapp.FxApplicationScoped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.nio.CharBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -28,10 +25,10 @@ public class VaultService {
 	private static final Logger LOG = LoggerFactory.getLogger(VaultService.class);
 
 	private final ExecutorService executorService;
-	private final Optional<KeychainAccess> keychain;
+	private final Optional<KeychainManager> keychain;
 
 	@Inject
-	public VaultService(ExecutorService executorService, Optional<KeychainAccess> keychain) {
+	public VaultService(ExecutorService executorService, Optional<KeychainManager> keychain) {
 		this.executorService = executorService;
 		this.keychain = keychain;
 	}
@@ -49,62 +46,6 @@ public class VaultService {
 		Task<Vault> task = new RevealVaultTask(vault);
 		task.setOnSucceeded(evt -> LOG.info("Revealed {}", vault.getDisplayableName()));
 		task.setOnFailed(evt -> LOG.error("Failed to reveal " + vault.getDisplayableName(), evt.getSource().getException()));
-		return task;
-	}
-
-	/**
-	 * Attempts to unlock all given vaults in a background thread using passwords stored in the system keychain.
-	 *
-	 * @param vaults The vaults to unlock
-	 * @implNote No-op if no system keychain is present
-	 */
-	public void attemptAutoUnlock(Collection<Vault> vaults) {
-		if (!keychain.isPresent()) {
-			LOG.debug("No system keychain found. Unable to auto unlock without saved passwords.");
-		} else {
-			List<Task<Vault>> unlockTasks = vaults.stream().map(v -> createAutoUnlockTask(v, keychain.get())).collect(Collectors.toList());
-			Task<Collection<Vault>> runSequentiallyTask = new RunSequentiallyTask(unlockTasks);
-			executorService.execute(runSequentiallyTask);
-		}
-	}
-
-	/**
-	 * Creates but doesn't start an auto-unlock task.
-	 *
-	 * @param vault The vault to unlock
-	 * @param keychainAccess The system keychain holding the passphrase for the vault
-	 * @return The task
-	 */
-	public Task<Vault> createAutoUnlockTask(Vault vault, KeychainAccess keychainAccess) {
-		Task<Vault> task = new AutoUnlockVaultTask(vault, keychainAccess);
-		task.setOnSucceeded(evt -> LOG.info("Auto-unlocked {}", vault.getDisplayableName()));
-		task.setOnFailed(evt -> LOG.error("Failed to auto-unlock " + vault.getDisplayableName(), evt.getSource().getException()));
-		return task;
-	}
-
-	/**
-	 * Unlocks a vault in a background thread
-	 *
-	 * @param vault The vault to unlock
-	 * @param passphrase The password to use - wipe this param asap
-	 * @implNote A copy of the passphrase will be made, which is wiped as soon as the task ran.
-	 */
-	public void unlock(Vault vault, CharSequence passphrase) {
-		executorService.execute(createUnlockTask(vault, passphrase));
-	}
-
-	/**
-	 * Creates but doesn't start an unlock task.
-	 *
-	 * @param vault The vault to unlock
-	 * @param passphrase The password to use - wipe this param asap
-	 * @return The task
-	 * @implNote A copy of the passphrase will be made, which is wiped as soon as the task ran.
-	 */
-	public Task<Vault> createUnlockTask(Vault vault, CharSequence passphrase) {
-		Task<Vault> task = new UnlockVaultTask(vault, passphrase);
-		task.setOnSucceeded(evt -> LOG.info("Unlocked {}", vault.getDisplayableName()));
-		task.setOnFailed(evt -> LOG.error("Failed to unlock " + vault.getDisplayableName(), evt.getSource().getException()));
 		return task;
 	}
 
@@ -206,116 +147,6 @@ public class VaultService {
 				throw e;
 			}
 			return completed;
-		}
-	}
-
-	/**
-	 * A task that runs a list of tasks in their given order
-	 */
-	private static class RunSequentiallyTask extends Task<Collection<Vault>> {
-
-		private final List<Task<Vault>> tasks;
-
-		public RunSequentiallyTask(List<Task<Vault>> tasks) {
-			this.tasks = List.copyOf(tasks);
-		}
-
-		@Override
-		protected List<Vault> call() throws ExecutionException, InterruptedException {
-			List<Vault> completed = new ArrayList<>();
-			for (Task<Vault> task : tasks) {
-				task.run();
-				Vault done = task.get();
-				completed.add(done);
-			}
-			return completed;
-		}
-	}
-
-	private static class AutoUnlockVaultTask extends Task<Vault> {
-
-		private final Vault vault;
-		private final KeychainAccess keychain;
-
-		public AutoUnlockVaultTask(Vault vault, KeychainAccess keychain) {
-			this.vault = vault;
-			this.keychain = keychain;
-		}
-
-		@Override
-		protected Vault call() throws Exception {
-			char[] storedPw = null;
-			try {
-				storedPw = keychain.loadPassphrase(vault.getId());
-				if (storedPw == null) {
-					throw new InvalidPassphraseException();
-				}
-				vault.unlock(CharBuffer.wrap(storedPw));
-			} finally {
-				if (storedPw != null) {
-					Arrays.fill(storedPw, ' ');
-				}
-			}
-			return vault;
-		}
-
-		@Override
-		protected void scheduled() {
-			vault.setState(VaultState.PROCESSING);
-		}
-
-		@Override
-		protected void succeeded() {
-			vault.setState(VaultState.UNLOCKED);
-		}
-
-		@Override
-		protected void failed() {
-			vault.setState(VaultState.LOCKED);
-		}
-	}
-
-	private static class UnlockVaultTask extends Task<Vault> {
-
-		private final Vault vault;
-		private final CharBuffer passphrase;
-
-		/**
-		 * @param vault The vault to unlock
-		 * @param passphrase The password to use - wipe this param asap
-		 * @implNote A copy of the passphrase will be made, which is wiped as soon as the task ran.
-		 */
-		public UnlockVaultTask(Vault vault, CharSequence passphrase) {
-			this.vault = vault;
-			this.passphrase = CharBuffer.allocate(passphrase.length());
-			for (int i = 0; i < passphrase.length(); i++) {
-				this.passphrase.put(i, passphrase.charAt(i));
-			}
-		}
-
-		@Override
-		protected Vault call() throws Exception {
-			try {
-				vault.unlock(passphrase);
-			} finally {
-				Arrays.fill(passphrase.array(), ' ');
-			}
-			return vault;
-		}
-
-		@Override
-		protected void scheduled() {
-			vault.setState(VaultState.PROCESSING);
-		}
-
-		@Override
-		protected void succeeded() {
-			vault.setState(VaultState.UNLOCKED);
-		}
-
-		@Override
-		protected void failed() {
-			vault.setState(VaultState.LOCKED);
 		}
 	}
 
