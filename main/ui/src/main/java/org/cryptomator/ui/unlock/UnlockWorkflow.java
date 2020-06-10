@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import org.cryptomator.common.vaults.Vault;
 import org.cryptomator.common.vaults.VaultState;
 import org.cryptomator.common.vaults.Volume;
@@ -94,7 +95,7 @@ public class UnlockWorkflow extends Task<Boolean> {
 			wipePassword(savedPassword.orElse(null));
 		}
 	}
-	
+
 	private boolean attemptUnlock() throws InterruptedException, IOException, Volume.VolumeException {
 		boolean proceed = password.get() != null || askForPassword(false) == PasswordEntry.PASSWORD_ENTERED;
 		while (proceed) {
@@ -112,6 +113,13 @@ public class UnlockWorkflow extends Task<Boolean> {
 		Platform.runLater(() -> {
 			window.setScene(unlockScene.get());
 			window.show();
+			Window owner = window.getOwner();
+			if (owner != null) {
+				window.setX(owner.getX() + (owner.getWidth() - window.getWidth()) / 2);
+				window.setY(owner.getY() + (owner.getHeight() - window.getHeight()) / 2);
+			} else {
+				window.centerOnScreen();
+			}
 			if (animateShake) {
 				Animations.createShakeWindowAnimation(window).play();
 			}
