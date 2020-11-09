@@ -8,10 +8,8 @@ package org.cryptomator.common;
 import com.tobiasdiez.easybind.EasyBind;
 import dagger.Module;
 import dagger.Provides;
-import javafx.beans.binding.Binding;
-import javafx.beans.binding.Bindings;
-import javafx.collections.ObservableList;
 import org.apache.commons.lang3.SystemUtils;
+import org.cryptomator.common.keychain.KeychainModule;
 import org.cryptomator.common.settings.Settings;
 import org.cryptomator.common.settings.SettingsProvider;
 import org.cryptomator.common.vaults.Vault;
@@ -23,6 +21,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javafx.beans.binding.Binding;
+import javafx.beans.binding.Bindings;
+import javafx.collections.ObservableList;
 import java.net.InetSocketAddress;
 import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
@@ -33,7 +34,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Module(subcomponents = {VaultComponent.class})
+@Module(subcomponents = {VaultComponent.class}, includes = {KeychainModule.class})
 public abstract class CommonsModule {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CommonsModule.class);
