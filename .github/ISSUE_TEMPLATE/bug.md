@@ -5,7 +5,9 @@ labels: type:bug
 ---
 
 <!--
-⚠️⚠️⚠️ READ CAREFULLY ⚠️⚠️⚠️
+**************************************
+    ⚠️⚠️⚠️ READ CAREFULLY ⚠️⚠️⚠️
+**************************************
 
 Do you want to ask a QUESTION? Are you looking for SUPPORT?
 We're happy to help you via our support channels! Please read: https://github.com/cryptomator/cryptomator/blob/develop/SUPPORT.md
@@ -14,7 +16,11 @@ By filing an issue, you are expected to comply with our code of conduct: https:/
 
 Of course, we also expect you to search for existing similar issues first! ;) https://github.com/cryptomator/cryptomator/issues?q=
 
-⚠️ IMPORTANT: If you don't stick to this template, the issue will get closed. To proof that you read this, please remove the X from the following line:
+⚠️ IMPORTANT: If you don't stick to this template, the issue will get closed.
+
+*****************************************************************************
+    To proof that you read this, please remove the X from the line below:
+*****************************************************************************
 -->
 <!-- oooXooo -->
 
@@ -24,7 +30,7 @@ Of course, we also expect you to search for existing similar issues first! ;) ht
 
 ### System Setup
 
-* Operating system and version: [Windows/macOS/Linux + Version]
+* Operating system and version: [Windows/macOS/Linux + Version ( + Desktop Environment, if Linux)]
 * Cryptomator version: [Shown in the settings]
 * Volume type: [Dokany/FUSE/WebDAV, shown in the settings]
 
@@ -51,7 +57,6 @@ Of course, we also expect you to search for existing similar issues first! ;) ht
 [Any additional information, log files, screenshots, configuration, or data that might be necessary to reproduce the issue.]
 
 <!--
-
 If you want to add the log file or screenshots, please add them as attachments. If your log file seems empty and doesn't show any errors, you may enable the debug mode first. Here is how to do that: https://community.cryptomator.org/t/how-do-i-enable-debug-mode/36
 
 Then reproduce the problem to ensure all important information is contained in there. You may use test data or redact sensitive information from the log file.
@@ -60,5 +65,4 @@ Log file location:
 - Windows: %appdata%/Cryptomator
 - macOS: ~/Library/Logs/Cryptomator
 - Linux: ~/.local/share/Cryptomator/logs
-
 -->

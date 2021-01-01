@@ -101,7 +101,7 @@ public class VaultModule {
 		if (readOnly.get()) {
 			flags.append(" -ordonly");
 		}
-		flags.append(" -ovolname=").append(mountName.get());
+		flags.append(" -ovolname=").append('"').append(mountName.get()).append('"');
 		flags.append(" -oatomic_o_trunc");
 		flags.append(" -oauto_xattr");
 		flags.append(" -oauto_cache");
@@ -156,9 +156,9 @@ public class VaultModule {
 		//See: https://github.com/billziss-gh/winfsp/issues/319
 		if (!readOnly.get()) {
 			flags.append(" -ouid=-1");
-			flags.append(" -ogid=-1");
+			flags.append(" -ogid=11");
 		}
-		flags.append(" -ovolname=").append(mountName.get());
+		flags.append(" -ovolname=").append('"').append(mountName.get()).append('"');
 		//Dokany requires this option to be set, WinFSP doesn't seem to share this peculiarity,
 		//but the option exists. Let's keep this here in case we need it.
 //		flags.append(" -oThreadCount=").append(5);

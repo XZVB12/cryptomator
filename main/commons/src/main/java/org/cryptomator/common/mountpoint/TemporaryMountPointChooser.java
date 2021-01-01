@@ -1,6 +1,5 @@
 package org.cryptomator.common.mountpoint;
 
-import org.apache.commons.lang3.SystemUtils;
 import org.cryptomator.common.Environment;
 import org.cryptomator.common.settings.VaultSettings;
 import org.cryptomator.common.vaults.Volume;
@@ -8,27 +7,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 
-public class TemporaryMountPointChooser implements MountPointChooser {
-
-	public static final int PRIORITY = 300;
+class TemporaryMountPointChooser implements MountPointChooser {
 
 	private static final Logger LOG = LoggerFactory.getLogger(TemporaryMountPointChooser.class);
-	private static final int MAX_TMPMOUNTPOINT_CREATION_RETRIES = 10;
 
 	private final VaultSettings vaultSettings;
 	private final Environment environment;
+	private final MountPointHelper helper;
 
 	@Inject
-	public TemporaryMountPointChooser(VaultSettings vaultSettings, Environment environment) {
+	public TemporaryMountPointChooser(VaultSettings vaultSettings, Environment environment, MountPointHelper helper) {
 		this.vaultSettings = vaultSettings;
 		this.environment = environment;
+		this.helper = helper;
 	}
 
 	@Override
@@ -42,30 +38,15 @@ public class TemporaryMountPointChooser implements MountPointChooser {
 
 	@Override
 	public Optional<Path> chooseMountPoint(Volume caller) {
-		return this.environment.getMountPointsDir().map(this::choose);
-	}
-
-	private Path choose(Path parent) {
-		String basename = this.vaultSettings.mountName().get();
-		for (int i = 0; i < MAX_TMPMOUNTPOINT_CREATION_RETRIES; i++) {
-			Path mountPoint = parent.resolve(basename + "_" + i);
-			if (Files.notExists(mountPoint)) {
-				return mountPoint;
-			}
-		}
-		LOG.error("Failed to find feasible mountpoint at {}{}{}_x. Giving up after {} attempts.", parent, File.separator, basename, MAX_TMPMOUNTPOINT_CREATION_RETRIES);
-		return null;
+		assert environment.getMountPointsDir().isPresent();
+		//clean leftovers of not-regularly unmounted vaults
+		//see https://github.com/cryptomator/cryptomator/issues/1013 and https://github.com/cryptomator/cryptomator/issues/1061
+		helper.clearIrregularUnmountDebrisIfNeeded();
+		return this.environment.getMountPointsDir().map(dir -> this.helper.chooseTemporaryMountPoint(this.vaultSettings, dir));
 	}
 
 	@Override
 	public boolean prepare(Volume caller, Path mountPoint) throws InvalidMountPointException {
-		// https://github.com/osxfuse/osxfuse/issues/306#issuecomment-245114592:
-		// In order to allow non-admin users to mount FUSE volumes in `/Volumes`,
-		// starting with version 3.5.0, FUSE will create non-existent mount points automatically.
-		if (SystemUtils.IS_OS_MAC && mountPoint.getParent().equals(Paths.get("/Volumes"))) {
-			return false;
-		}
-
 		try {
 			switch (caller.getMountPointRequirement()) {
 				case PARENT_NO_MOUNT_POINT -> {
@@ -103,8 +84,4 @@ public class TemporaryMountPointChooser implements MountPointChooser {
 		}
 	}
 
-	@Override
-	public int getPriority() {
-		return PRIORITY;
-	}
 }

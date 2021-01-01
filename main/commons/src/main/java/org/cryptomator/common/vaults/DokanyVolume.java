@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.SortedSet;
 import java.util.concurrent.ExecutorService;
 
 public class DokanyVolume extends AbstractVolume {
@@ -28,7 +27,7 @@ public class DokanyVolume extends AbstractVolume {
 	private Mount mount;
 
 	@Inject
-	public DokanyVolume(VaultSettings vaultSettings, ExecutorService executorService, @Named("orderedMountPointChoosers") SortedSet<MountPointChooser> choosers) {
+	public DokanyVolume(VaultSettings vaultSettings, ExecutorService executorService, @Named("orderedMountPointChoosers") Iterable<MountPointChooser> choosers) {
 		super(choosers);
 		this.vaultSettings = vaultSettings;
 		this.mountFactory = new MountFactory(executorService);
@@ -42,7 +41,6 @@ public class DokanyVolume extends AbstractVolume {
 	@Override
 	public void mount(CryptoFileSystem fs, String mountFlags) throws InvalidMountPointException, VolumeException {
 		this.mountPoint = determineMountPoint();
-		String mountName = vaultSettings.displayName().get();
 		try {
 			this.mount = mountFactory.mount(fs.getPath("/"), mountPoint, vaultSettings.mountName().get(), FS_TYPE_NAME, mountFlags.strip());
 		} catch (MountFailedException e) {
@@ -62,11 +60,25 @@ public class DokanyVolume extends AbstractVolume {
 	}
 
 	@Override
-	public void unmount() {
-		mount.close();
+	public void unmount() throws VolumeException {
+		try {
+			mount.unmount();
+		} catch (IllegalStateException e) {
+			throw new VolumeException("Unmount Failed.", e);
+		}
 		cleanupMountPoint();
 	}
 
+	@Override
+	public void unmountForced() {
+		mount.unmountForced();
+		cleanupMountPoint();
+	}
+
+	@Override
+	public boolean supportsForcedUnmount() {
+		return true;
+	}
 	@Override
 	public boolean isSupported() {
 		return DokanyVolume.isSupportedStatic();
